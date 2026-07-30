@@ -1,0 +1,39 @@
+# Build output
+build/
+bin/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+.gradle/
+
+# Vaadin / frontend toolchain
+node_modules/
+node/
+package.json
+package-lock.json
+pnpm-lock.yaml
+pnpmfile.js
+tsconfig.json
+types.d.ts
+vite.config.ts
+vite.generated.ts
+src/main/bundles/
+src/main/frontend/generated/
+frontend/generated/
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Eclipse / VS Code
+.classpath
+.project
+.settings/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+*.log

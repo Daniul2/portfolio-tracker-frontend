@@ -1,0 +1,27 @@
+/*
+ * Theme for the Portfolio Tracker UI.
+ *
+ * Built on Vaadin's Lumo theme; only the few things worth adjusting for this
+ * application are overridden. "badge" is imported in theme.json because the
+ * dashboard and alert screens use badge styling to mark gains, losses and
+ * active/paused states.
+ */
+
+html {
+    --lumo-font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+    /* A slightly cooler primary than the Lumo default, to suit a finance tool. */
+    --lumo-primary-color: hsl(214, 88%, 42%);
+    --lumo-primary-color-50pct: hsla(214, 88%, 42%, 0.5);
+    --lumo-primary-color-10pct: hsla(214, 88%, 42%, 0.1);
+}
+
+/* Numbers line up column-wise, which makes values easy to compare down a grid. */
+vaadin-grid {
+    font-variant-numeric: tabular-nums;
+}
+
+/* The stat cards on the dashboard. */
+.stat-card {
+    min-width: 220px;
+}

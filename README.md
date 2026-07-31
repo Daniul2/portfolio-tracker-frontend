@@ -5,7 +5,7 @@ The user interface for the portfolio tracker, built with [Vaadin](https://vaadin
 It holds no business logic and no database of its own — every screen is filled by
 calling the backend's REST API.
 
-**Backend repository:** [portfolio-tracker-backend](../portfolio-tracker-backend)
+**Backend repository:** https://github.com/Daniul2/portfolio-tracker-backend
 — the REST API this application consumes. **It must be running**, or the screens
 will show a "cannot reach the backend" notification.
 

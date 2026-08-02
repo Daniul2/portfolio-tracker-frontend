@@ -5,8 +5,6 @@ import com.kodilla.portfolio.ui.client.BackendDtos.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
-import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -15,7 +13,6 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -30,18 +27,10 @@ public class PortfolioApiClient {
     private final ObjectMapper objectMapper;
     private final Long userId;
 
-    public PortfolioApiClient(@Value("${app.backend.base-url}") String baseUrl,
-                              @Value("${app.backend.timeout-seconds}") int timeoutSeconds,
-                              @Value("${app.backend.user-id}") Long userId,
-                              ObjectMapper objectMapper) {
-        Duration timeout = Duration.ofSeconds(timeoutSeconds);
-        this.restClient = RestClient.builder()
-                .baseUrl(baseUrl)
-                .requestFactory(ClientHttpRequestFactoryBuilder.detect()
-                        .build(ClientHttpRequestFactorySettings.defaults()
-                                .withConnectTimeout(timeout)
-                                .withReadTimeout(timeout)))
-                .build();
+    public PortfolioApiClient(RestClient backendRestClient,
+                              ObjectMapper objectMapper,
+                              @Value("${app.backend.user-id}") Long userId) {
+        this.restClient = backendRestClient;
         this.objectMapper = objectMapper;
         this.userId = userId;
     }

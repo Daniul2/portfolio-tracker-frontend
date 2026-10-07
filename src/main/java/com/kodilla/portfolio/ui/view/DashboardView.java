@@ -5,11 +5,14 @@ import com.kodilla.portfolio.ui.client.PortfolioApiClient;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -30,6 +33,8 @@ public class DashboardView extends VerticalLayout {
 
     private static final DateTimeFormatter TIMESTAMP =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final int CURRENCY_CODE_LENGTH = 3;
+    private static final String NO_PRICES_YET = "no prices yet - refresh market data";
 
     private final PortfolioApiClient client;
 
@@ -72,8 +77,12 @@ public class DashboardView extends VerticalLayout {
         refresh.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         Button reload = new Button("Reload", event -> reloadSelected());
+        Button newPortfolio = new Button("New portfolio", event -> openNewPortfolioDialog());
+        Button deletePortfolio = new Button("Delete portfolio", event -> confirmDeletePortfolio());
+        deletePortfolio.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
 
-        HorizontalLayout toolbar = new HorizontalLayout(portfolioPicker, refresh, reload);
+        HorizontalLayout toolbar = new HorizontalLayout(
+                portfolioPicker, refresh, reload, newPortfolio, deletePortfolio);
         toolbar.setAlignItems(Alignment.END);
         return toolbar;
     }
@@ -138,14 +147,76 @@ public class DashboardView extends VerticalLayout {
     }
 
     private void loadPortfolios() {
+        loadPortfolios(null);
+    }
+
+    /** @param selectId portfolio to select afterwards, or null for the first one */
+    private void loadPortfolios(Long selectId) {
         List<Portfolio> portfolios = guardValue(client::portfolios, List.of());
         portfolioPicker.setItems(portfolios);
-        if (!portfolios.isEmpty()) {
-            portfolioPicker.setValue(portfolios.get(0));
-        } else {
+        if (portfolios.isEmpty()) {
             statsRow.removeAll();
-            statsRow.add(new Span("No portfolios yet. Create one on the Transactions screen."));
+            statsRow.add(new Span("No portfolios yet. Use “New portfolio” to create one."));
+            return;
         }
+        portfolioPicker.setValue(portfolios.stream()
+                .filter(portfolio -> portfolio.id().equals(selectId))
+                .findFirst()
+                .orElse(portfolios.get(0)));
+    }
+
+    private void openNewPortfolioDialog() {
+        Dialog dialog = new Dialog("New portfolio");
+
+        TextField name = new TextField("Name");
+        TextField currency = new TextField("Reporting currency");
+        currency.setValue("PLN");
+        currency.setMaxLength(CURRENCY_CODE_LENGTH);
+        currency.setHelperText("Three-letter code, e.g. PLN, USD, EUR");
+
+        Button save = new Button("Create", event -> {
+            if (name.isEmpty() || currency.getValue().trim().length() != CURRENCY_CODE_LENGTH) {
+                error("Enter a name and a three-letter currency code");
+                return;
+            }
+            Portfolio created = guardValue(() -> client.createPortfolio(new PortfolioRequest(
+                    client.currentUserId(), name.getValue().trim(), currency.getValue().trim())), null);
+            if (created != null) {
+                success("Portfolio created");
+                dialog.close();
+                loadPortfolios(created.id());
+            }
+        });
+        save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+
+        dialog.add(new FormLayout(name, currency));
+        dialog.getFooter().add(new Button("Cancel", event -> dialog.close()), save);
+        dialog.open();
+    }
+
+    /** Deleting cascades to the portfolio's transactions and alerts, so ask first. */
+    private void confirmDeletePortfolio() {
+        Portfolio selected = portfolioPicker.getValue();
+        if (selected == null) {
+            error("Select a portfolio first");
+            return;
+        }
+
+        Dialog dialog = new Dialog("Delete portfolio");
+        dialog.add(new Span("Delete “" + selected.name()
+                + "” together with its transactions and alerts? This cannot be undone."));
+
+        Button delete = new Button("Delete", event -> {
+            if (guard(() -> client.deletePortfolio(selected.id()))) {
+                success("Portfolio deleted");
+                dialog.close();
+                loadPortfolios();
+            }
+        });
+        delete.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
+
+        dialog.getFooter().add(new Button("Cancel", event -> dialog.close()), delete);
+        dialog.open();
     }
 
     private void reloadSelected() {
@@ -174,9 +245,12 @@ public class DashboardView extends VerticalLayout {
         statsRow.removeAll();
         statsRow.add(
                 stat("Total cost", money(summary.totalCostUsd(), "USD")),
-                stat("Market value", money(summary.totalValueUsd(), "USD")),
-                stat("Profit / loss", money(summary.totalPnlUsd(), "USD")
-                        + "  " + percent(summary.totalPnlPercent())),
+                stat(summary.fullyPriced() ? "Market value" : "Market value (priced assets only)",
+                        summary.totalValueUsd() == null
+                                ? NO_PRICES_YET : money(summary.totalValueUsd(), "USD")),
+                stat("Profit / loss", summary.totalPnlUsd() == null
+                        ? NO_PRICES_YET
+                        : money(summary.totalPnlUsd(), "USD") + "  " + percent(summary.totalPnlPercent())),
                 stat("Value in " + summary.baseCurrency(),
                         money(summary.totalValueBase(), summary.baseCurrency())),
                 stat("USD rate", fxLabel(summary)));

@@ -11,16 +11,20 @@ import java.util.function.Supplier;
 /** Shared helpers: consistent notifications and number formatting. */
 final class ViewSupport {
 
+    private static final int SUCCESS_DURATION_MS = 3000;
+    /** Errors stay up longer: they usually carry a sentence worth reading. */
+    private static final int ERROR_DURATION_MS = 6000;
+
     private ViewSupport() {
     }
 
     static void success(String message) {
-        Notification notification = Notification.show(message, 3000, Notification.Position.TOP_END);
+        Notification notification = Notification.show(message, SUCCESS_DURATION_MS, Notification.Position.TOP_END);
         notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
     }
 
     static void error(String message) {
-        Notification notification = Notification.show(message, 6000, Notification.Position.TOP_END);
+        Notification notification = Notification.show(message, ERROR_DURATION_MS, Notification.Position.TOP_END);
         notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
     }
 

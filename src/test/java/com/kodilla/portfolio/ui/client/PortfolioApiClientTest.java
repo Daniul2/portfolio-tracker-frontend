@@ -224,6 +224,38 @@ class PortfolioApiClientTest {
     class Writing {
 
         @Test
+        @DisplayName("creating a portfolio posts the configured user's id and maps the result")
+        void createsPortfolio() {
+            server.expect(method(org.springframework.http.HttpMethod.POST))
+                    .andExpect(requestTo("http://backend.test/v1/portfolios"))
+                    .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers
+                            .jsonPath("$.userId").value(1))
+                    .andRespond(withSuccess("""
+                            {"id":5,"userId":1,"name":"Savings","baseCurrency":"EUR",
+                             "createdAt":"2026-10-07T10:00:00","transactionCount":0}
+                            """, MediaType.APPLICATION_JSON));
+
+            Portfolio created = client.createPortfolio(
+                    new PortfolioRequest(client.currentUserId(), "Savings", "EUR"));
+
+            server.verify();
+            assertThat(created.id()).isEqualTo(5L);
+            assertThat(created.baseCurrency()).isEqualTo("EUR");
+        }
+
+        @Test
+        @DisplayName("deleting a portfolio issues DELETE")
+        void deletesPortfolio() {
+            server.expect(requestTo("http://backend.test/v1/portfolios/5"))
+                    .andExpect(method(org.springframework.http.HttpMethod.DELETE))
+                    .andRespond(withNoContent());
+
+            client.deletePortfolio(5L);
+
+            server.verify();
+        }
+
+        @Test
         @DisplayName("creating a transaction posts JSON and maps the result")
         void createsTransaction() {
             server.expect(method(org.springframework.http.HttpMethod.POST))
@@ -403,26 +435,22 @@ class PortfolioApiClientTest {
         }
 
         @Test
-        @DisplayName("the status code is carried on the exception")
-        void carriesStatusCode() {
+        @DisplayName("a conflict surfaces the backend's explanation")
+        void translatesConflict() {
             server.expect(anything()).andRespond(withStatus(HttpStatus.CONFLICT)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body("""
-                            {"status":409,"error":"Conflict","message":"already exists",
+                            {"status":409,"error":"Conflict","message":"Asset 'x' is already tracked",
                              "fieldErrors":{},"timestamp":"2026-07-31T11:00:00"}
                             """));
 
             assertThatThrownBy(() -> client.createAsset(new AssetRequest("x", "X", "X")))
                     .isInstanceOf(BackendException.class)
-                    .satisfies(e -> {
-                        BackendException backendException = (BackendException) e;
-                        assertThat(backendException.getStatus()).isEqualTo(409);
-                        assertThat(backendException.isConnectionFailure()).isFalse();
-                    });
+                    .hasMessage("Asset 'x' is already tracked");
         }
 
         @Test
-        @DisplayName("an unreachable backend is reported as a connection failure, not a status")
+        @DisplayName("an unreachable backend gets its own message rather than a status code")
         void translatesConnectionFailure() {
             // No stub registered and the host does not resolve, so the request
             // fails at the transport layer rather than returning a status.
@@ -433,8 +461,7 @@ class PortfolioApiClientTest {
 
             assertThatThrownBy(offline::portfolios)
                     .isInstanceOf(BackendException.class)
-                    .hasMessageContaining("Cannot reach the backend")
-                    .satisfies(e -> assertThat(((BackendException) e).isConnectionFailure()).isTrue());
+                    .hasMessageContaining("Cannot reach the backend");
         }
     }
 }

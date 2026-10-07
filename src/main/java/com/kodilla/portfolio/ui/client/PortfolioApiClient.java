@@ -242,7 +242,7 @@ public class PortfolioApiClient {
         try {
             return request.get();
         } catch (RestClientResponseException e) {
-            throw new BackendException(e.getStatusCode().value(), describe(e));
+            throw new BackendException(describe(e));
         } catch (ResourceAccessException e) {
             log.warn("Backend unreachable: {}", e.getMessage());
             throw new BackendException(

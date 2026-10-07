@@ -49,6 +49,7 @@ public final class BackendDtos {
                                    BigDecimal totalCostUsd, BigDecimal totalValueUsd,
                                    BigDecimal totalPnlUsd, BigDecimal totalPnlPercent,
                                    BigDecimal fxRate, BigDecimal totalValueBase,
+                                   boolean fullyPriced,
                                    List<Holding> holdings, LocalDateTime valuedAt) {
     }
 

@@ -15,7 +15,7 @@ will show a "cannot reach the backend" notification.
 
 | Screen | What it does |
 |---|---|
-| **Dashboard** | Portfolio value in USD and in its own currency, profit/loss per holding, recent alerts |
+| **Dashboard** | Portfolio value in USD and in its own currency, profit/loss per holding, recent alerts; create and delete portfolios |
 | **Transactions** | Add, edit and delete buys and sells |
 | **Alerts** | Create price and portfolio-value thresholds, pause them, check them on demand |
 | **Assets** | Manage which assets are tracked and which the scheduler prices |

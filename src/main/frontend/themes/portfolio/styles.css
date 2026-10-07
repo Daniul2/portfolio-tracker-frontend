@@ -20,8 +20,3 @@ html {
 vaadin-grid {
     font-variant-numeric: tabular-nums;
 }
-
-/* The stat cards on the dashboard. */
-.stat-card {
-    min-width: 220px;
-}

@@ -92,7 +92,7 @@ public class PortfolioApiClient {
     }
 
     public Asset setAssetActive(Long assetId, boolean active) {
-        return call(() -> restClient.put()
+        return call(() -> restClient.patch()
                 .uri(uri -> uri.path("/assets/{id}/active").queryParam("value", active).build(assetId))
                 .retrieve()
                 .body(Asset.class));

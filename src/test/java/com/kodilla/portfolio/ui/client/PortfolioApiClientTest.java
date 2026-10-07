@@ -271,10 +271,10 @@ class PortfolioApiClientTest {
         }
 
         @Test
-        @DisplayName("toggling an asset sends the flag as a query parameter")
+        @DisplayName("toggling an asset is a PATCH with the flag as a query parameter")
         void togglesAsset() {
             server.expect(queryParam("value", "false"))
-                    .andExpect(method(org.springframework.http.HttpMethod.PUT))
+                    .andExpect(method(org.springframework.http.HttpMethod.PATCH))
                     .andRespond(withSuccess("""
                             {"id":1,"externalId":"bitcoin","symbol":"BTC","name":"Bitcoin",
                              "active":false,"createdAt":"2026-07-30T08:33:28"}
